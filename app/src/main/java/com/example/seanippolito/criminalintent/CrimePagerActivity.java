@@ -8,7 +8,8 @@ import android.support.v4.app.FragmentManager;
 import android.support.v4.app.FragmentPagerAdapter;
 import android.support.v4.view.ViewPager;
 import android.support.v7.app.AppCompatActivity;
-import android.support.v7.widget.ContentFrameLayout;
+import android.view.View;
+import android.widget.Button;
 
 
 import java.util.ArrayList;
@@ -25,16 +26,41 @@ public class CrimePagerActivity extends AppCompatActivity {
 
     private ViewPager mViewPager;
     private ArrayList<Crime> mCrimes;
+    private Button mJumpToFirst;
+    private Button mJumpToLast;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_crime_pager);
 
-        UUID crimeId = (UUID) getIntent().getSerializableExtra(EXTRA_CRIME_ID);
-        mViewPager = (ViewPager) findViewById(R.id.crime_view_pager);
-
         mCrimes = CrimeLab.get(this).getCrimes();
+        UUID crimeId = (UUID) getIntent().getSerializableExtra(EXTRA_CRIME_ID);
+
+        mViewPager = (ViewPager) findViewById(R.id.crime_view_pager);
+        mViewPager.setClipToPadding(false);
+        mViewPager.setPageMargin(16);
+        mViewPager.setPadding(16,16,16,16);
+
+        mJumpToFirst = (Button) findViewById(R.id.jump_to_first);
+        mJumpToLast = (Button) findViewById(R.id.jump_to_last);
+
+        mJumpToFirst.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                mViewPager.setCurrentItem(0);
+                mJumpToFirst.setEnabled(false);
+            }
+        });
+
+        mJumpToLast.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                mViewPager.setCurrentItem(mCrimes.size());
+                mJumpToLast.setEnabled(false);
+            }
+        });
+
         FragmentManager fragmentManager = getSupportFragmentManager();
         mViewPager.setAdapter(new FragmentPagerAdapter(fragmentManager) {
 
@@ -49,6 +75,40 @@ public class CrimePagerActivity extends AppCompatActivity {
                 return mCrimes.size();
             }
         });
+
+        mViewPager.addOnPageChangeListener(new ViewPager.OnPageChangeListener() {
+            @Override
+            public void onPageScrolled(int position, float positionOffset, int positionOffsetPixels) {
+
+            }
+
+            @Override
+            public void onPageSelected(int position) {
+                if(position != 0) {
+                    mJumpToFirst.setEnabled(true);
+                } else {
+                    mJumpToFirst.setEnabled(false);
+                }
+
+                if(position != (mCrimes.size() - 1)) {
+                    mJumpToLast.setEnabled(true);
+                } else {
+                    mJumpToLast.setEnabled(false);
+                }
+            }
+
+            @Override
+            public void onPageScrollStateChanged(int state) {
+
+            }
+        });
+
+        for(int i = 0; i < mCrimes.size(); i++) {
+            if(mCrimes.get(i).getId().equals(crimeId)) {
+                mViewPager.setCurrentItem(i);
+                break;
+            }
+        }
     }
 
     public static Intent newIntent(Context packageContext, UUID crimeId) {
